@@ -1,0 +1,36 @@
+name: Performance Smoke Test
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: user_perf
+          POSTGRES_PASSWORD: password_perf
+          POSTGRES_DB: performance_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies and start API
+        run: |
+          cd api
+          npm install
+          DB_HOST=localhost DB_USER=user_perf DB_PASS=password_perf DB_NAME=performance_db DB_PORT=5432 node index.js &
+          sleep 10
+      - name: Run k6 smoke test
+        uses: grafana/k6-action@v0.3.0
+        with:
+          filename: performance-tests/smoke-test.js
