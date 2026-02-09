@@ -1,6 +1,5 @@
 name: Performance Smoke Test
 on: [push]
-workflow_dispatch:
 
 jobs:
   test:
